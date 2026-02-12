@@ -46,7 +46,7 @@ export default function Dashboard() {
         <StatsCard label="Total Requests" value={requisitions.length} icon={ClipboardList} trend="All time" />
         <StatsCard label="Pending Approval" value={pending} icon={Clock} trend="Awaiting review" />
         <StatsCard label="Approved" value={approved} icon={CheckCircle2} trend="This month" />
-        <StatsCard label="Total Value" value={`₦${total.toLocaleString()}`} icon={ClipboardList} trend="Combined amount" />
+        <StatsCard label="Total Value" value={`$${total.toLocaleString()}`} icon={ClipboardList} trend="Combined amount" />
       </div>
 
       <div>

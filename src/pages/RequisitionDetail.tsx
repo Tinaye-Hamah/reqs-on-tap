@@ -135,8 +135,8 @@ export default function RequisitionDetail() {
                     <TableRow key={item.id}>
                       <TableCell className="text-sm">{item.description}</TableCell>
                       <TableCell className="text-sm text-center">{item.quantity}</TableCell>
-                      <TableCell className="text-sm text-right">₦{Number(item.unit_price).toLocaleString()}</TableCell>
-                      <TableCell className="text-sm text-right font-medium">₦{(item.quantity * Number(item.unit_price)).toLocaleString()}</TableCell>
+                      <TableCell className="text-sm text-right">${Number(item.unit_price).toLocaleString()}</TableCell>
+                      <TableCell className="text-sm text-right font-medium">${(item.quantity * Number(item.unit_price)).toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -145,7 +145,7 @@ export default function RequisitionDetail() {
             <div className="flex justify-end mt-3">
               <div className="bg-primary/5 rounded-lg px-4 py-2">
                 <p className="text-xs text-muted-foreground">Total Amount</p>
-                <p className="text-lg font-heading font-bold text-primary">₦{Number(req.total_amount).toLocaleString()}</p>
+                <p className="text-lg font-heading font-bold text-primary">${Number(req.total_amount).toLocaleString()}</p>
               </div>
             </div>
           </div>
