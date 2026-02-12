@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import logo from '@/assets/logo.png';
 
 const roles = [
   { value: 'employee', label: 'Employee', description: 'Submit and track your own requisitions' },
@@ -63,9 +63,7 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center mx-auto">
-            <FileText className="w-7 h-7 text-primary-foreground" />
-          </div>
+          <img src={logo} alt="Brainstake" className="w-16 h-16 mx-auto object-contain" />
           <h1 className="text-2xl font-heading font-bold">Brainstake</h1>
           <p className="text-muted-foreground text-sm">
             {isLogin ? 'Internal Requisition Platform — Sign in to continue' : 'Create your staff account'}

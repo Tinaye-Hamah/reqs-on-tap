@@ -2,8 +2,9 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  LayoutDashboard, FileText, FilePlus, ClipboardList, LogOut,
+  LayoutDashboard, FilePlus, ClipboardList, LogOut,
 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 export function AppSidebar() {
   const location = useLocation();
@@ -22,9 +23,7 @@ export function AppSidebar() {
     <aside className="hidden lg:flex flex-col w-64 bg-sidebar text-sidebar-foreground min-h-screen print:hidden">
       <div className="p-6">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <FileText className="w-5 h-5 text-sidebar-primary-foreground" />
-          </div>
+          <img src={logo} alt="Brainstake" className="w-9 h-9 rounded-lg object-contain" />
           <div>
             <h1 className="font-heading text-lg font-bold leading-tight">Brainstake</h1>
             <p className="text-xs text-sidebar-foreground/60">Internal Requisition Platform</p>
