@@ -7,11 +7,11 @@ import { FileText, Menu, X, LayoutDashboard, ClipboardList, FilePlus, LogOut } f
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { isAdmin, signOut } = useAuth();
+  const { isElevated, signOut } = useAuth();
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/requisitions', label: isAdmin ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
+    { to: '/requisitions', label: isElevated ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
     { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
   ];
 

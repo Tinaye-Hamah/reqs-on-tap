@@ -19,7 +19,7 @@ const categoryLabels: Record<string, string> = {
 export default function RequisitionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAdmin, user } = useAuth();
+  const { isElevated, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -150,7 +150,7 @@ export default function RequisitionDetail() {
             </div>
           </div>
 
-          {isAdmin && req.status === 'pending' && (
+          {isElevated && req.status === 'pending' && (
             <div className="flex gap-3 pt-2 border-t border-border print:hidden">
               <Button onClick={() => updateStatus.mutate('approved')} className="bg-success text-success-foreground hover:bg-success/90 flex-1">Approve</Button>
               <Button onClick={() => updateStatus.mutate('rejected')} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 flex-1">Reject</Button>
