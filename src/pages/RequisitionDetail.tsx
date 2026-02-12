@@ -1,55 +1,94 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { sampleRequisitions, categoryLabels } from '@/lib/requisition-data';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PriorityBadge } from '@/components/PriorityBadge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, User, Building2, FileText } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Building2, FileText, Printer } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+
+const categoryLabels: Record<string, string> = {
+  'office-supplies': 'Office Supplies', equipment: 'Equipment', software: 'Software',
+  travel: 'Travel', maintenance: 'Maintenance', other: 'Other',
+};
 
 export default function RequisitionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const req = sampleRequisitions.find(r => r.id === id);
+  const { isAdmin, user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: req, isLoading } = useQuery({
+    queryKey: ['requisition', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('requisitions')
+        .select('*, requisition_items(*)')
+        .eq('id', id!)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id && !!user,
+  });
+
+  const updateStatus = useMutation({
+    mutationFn: async (status: string) => {
+      const { error } = await supabase.from('requisitions').update({ status }).eq('id', id!);
+      if (error) throw error;
+    },
+    onSuccess: (_, status) => {
+      toast({ title: `Requisition ${status}` });
+      queryClient.invalidateQueries({ queryKey: ['requisition', id] });
+      queryClient.invalidateQueries({ queryKey: ['requisitions'] });
+    },
+  });
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-20"><p className="text-muted-foreground">Loading...</p></div>;
+  }
 
   if (!req) {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
         <p className="text-lg font-medium text-muted-foreground">Requisition not found</p>
-        <Button variant="ghost" onClick={() => navigate('/requisitions')} className="mt-4">
-          ← Back to list
-        </Button>
+        <Button variant="ghost" onClick={() => navigate('/requisitions')} className="mt-4">← Back to list</Button>
       </div>
     );
   }
 
-  const formattedDate = new Date(req.createdAt).toLocaleDateString('en-US', {
+  const formattedDate = new Date(req.created_at).toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
 
+  const items = req.requisition_items || [];
+
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
-      <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2 text-muted-foreground hover:text-foreground -ml-2">
-        <ArrowLeft className="w-4 h-4" />
-        Back
-      </Button>
+      <div className="flex items-center justify-between print:hidden">
+        <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2 text-muted-foreground hover:text-foreground -ml-2">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
+          <Printer className="w-4 h-4" /> Print
+        </Button>
+      </div>
 
-      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden print:shadow-none print:border-black">
         <div className="p-6 border-b border-border">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">{req.id}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">{req.req_number}</p>
               <h1 className="text-xl font-heading font-bold">{req.title}</h1>
             </div>
             <div className="flex items-center gap-2">
-              <PriorityBadge priority={req.priority} />
-              <StatusBadge status={req.status} />
+              <PriorityBadge priority={req.priority as any} />
+              <StatusBadge status={req.status as any} />
             </div>
           </div>
         </div>
@@ -57,16 +96,16 @@ export default function RequisitionDetail() {
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> Requester</p>
-              <p className="text-sm font-medium">{req.requester}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="w-3 h-3" /> Department</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> Department</p>
               <p className="text-sm font-medium">{req.department}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><FileText className="w-3 h-3" /> Category</p>
-              <p className="text-sm font-medium">{categoryLabels[req.category]}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="w-3 h-3" /> Category</p>
+              <p className="text-sm font-medium">{categoryLabels[req.category] || req.category}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><FileText className="w-3 h-3" /> Priority</p>
+              <p className="text-sm font-medium capitalize">{req.priority}</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" /> Date</p>
@@ -92,12 +131,12 @@ export default function RequisitionDetail() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {req.items.map((item, i) => (
-                    <TableRow key={i}>
+                  {items.map((item: any) => (
+                    <TableRow key={item.id}>
                       <TableCell className="text-sm">{item.description}</TableCell>
                       <TableCell className="text-sm text-center">{item.quantity}</TableCell>
-                      <TableCell className="text-sm text-right">${item.unitPrice.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm text-right font-medium">${(item.quantity * item.unitPrice).toLocaleString()}</TableCell>
+                      <TableCell className="text-sm text-right">₦{Number(item.unit_price).toLocaleString()}</TableCell>
+                      <TableCell className="text-sm text-right font-medium">₦{(item.quantity * Number(item.unit_price)).toLocaleString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -106,15 +145,15 @@ export default function RequisitionDetail() {
             <div className="flex justify-end mt-3">
               <div className="bg-primary/5 rounded-lg px-4 py-2">
                 <p className="text-xs text-muted-foreground">Total Amount</p>
-                <p className="text-lg font-heading font-bold text-primary">${req.totalAmount.toLocaleString()}</p>
+                <p className="text-lg font-heading font-bold text-primary">₦{Number(req.total_amount).toLocaleString()}</p>
               </div>
             </div>
           </div>
 
-          {req.status === 'pending' && (
-            <div className="flex gap-3 pt-2 border-t border-border">
-              <Button className="bg-success text-success-foreground hover:bg-success/90 flex-1">Approve</Button>
-              <Button variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 flex-1">Reject</Button>
+          {isAdmin && req.status === 'pending' && (
+            <div className="flex gap-3 pt-2 border-t border-border print:hidden">
+              <Button onClick={() => updateStatus.mutate('approved')} className="bg-success text-success-foreground hover:bg-success/90 flex-1">Approve</Button>
+              <Button onClick={() => updateStatus.mutate('rejected')} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 flex-1">Reject</Button>
             </div>
           )}
         </div>

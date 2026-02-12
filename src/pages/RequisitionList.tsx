@@ -1,20 +1,43 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { sampleRequisitions, RequisitionStatus, statusLabels } from '@/lib/requisition-data';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { RequisitionTable } from '@/components/RequisitionTable';
 import { Button } from '@/components/ui/button';
 import { FilePlus, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const filters: (RequisitionStatus | 'all')[] = ['all', 'pending', 'approved', 'in-progress', 'rejected'];
+const statusLabels: Record<string, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  'in-progress': 'In Progress',
+};
+
+const filters = ['all', 'pending', 'approved', 'in-progress', 'rejected'];
 
 export default function RequisitionList() {
   const navigate = useNavigate();
-  const [activeFilter, setActiveFilter] = useState<RequisitionStatus | 'all'>('all');
+  const { user } = useAuth();
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const { data: requisitions = [] } = useQuery({
+    queryKey: ['requisitions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('requisitions')
+        .select('*, requisition_items(*)')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const filtered = activeFilter === 'all'
-    ? sampleRequisitions
-    : sampleRequisitions.filter(r => r.status === activeFilter);
+    ? requisitions
+    : requisitions.filter(r => r.status === activeFilter);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -42,7 +65,7 @@ export default function RequisitionList() {
                 : 'bg-card text-muted-foreground border-border hover:border-primary/30'
             )}
           >
-            {f === 'all' ? 'All' : statusLabels[f]}
+            {f === 'all' ? 'All' : statusLabels[f] || f}
           </button>
         ))}
       </div>

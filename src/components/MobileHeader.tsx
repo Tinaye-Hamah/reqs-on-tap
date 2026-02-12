@@ -1,20 +1,22 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { FileText, Menu, X, LayoutDashboard, ClipboardList, FilePlus } from 'lucide-react';
-
-const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/requisitions', label: 'All Requisitions', icon: ClipboardList },
-  { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
-];
+import { useAuth } from '@/hooks/useAuth';
+import { FileText, Menu, X, LayoutDashboard, ClipboardList, FilePlus, LogOut } from 'lucide-react';
 
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { isAdmin, signOut } = useAuth();
+
+  const navItems = [
+    { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/requisitions', label: isAdmin ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
+    { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
+  ];
 
   return (
-    <header className="lg:hidden sticky top-0 z-50 bg-sidebar text-sidebar-foreground">
+    <header className="lg:hidden sticky top-0 z-50 bg-sidebar text-sidebar-foreground print:hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
@@ -48,6 +50,12 @@ export function MobileHeader() {
               </NavLink>
             );
           })}
+          <button
+            onClick={() => { signOut(); setOpen(false); }}
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent/50 w-full"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </nav>
       )}
     </header>
