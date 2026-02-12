@@ -188,7 +188,7 @@ export default function NewRequisition() {
           <div className="flex justify-end">
             <div className="bg-primary/5 rounded-lg px-4 py-2 text-right">
               <p className="text-xs text-muted-foreground">Estimated Total</p>
-              <p className="text-lg font-heading font-bold text-primary">₦{total.toLocaleString()}</p>
+              <p className="text-lg font-heading font-bold text-primary">${total.toLocaleString()}</p>
             </div>
           </div>
         </div>

@@ -62,7 +62,7 @@ export function RequisitionTable({ requisitions }: Props) {
                 <StatusBadge status={req.status} />
               </TableCell>
               <TableCell className="text-right font-medium text-sm">
-                ₦{Number(req.total_amount).toLocaleString()}
+                ${Number(req.total_amount).toLocaleString()}
               </TableCell>
             </TableRow>
           ))}
