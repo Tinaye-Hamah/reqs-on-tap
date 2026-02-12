@@ -1,13 +1,31 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Plus, Trash2, Send } from 'lucide-react';
-import { RequisitionCategory, RequisitionPriority, categoryLabels, priorityLabels } from '@/lib/requisition-data';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+
+const categoryLabels: Record<string, string> = {
+  'office-supplies': 'Office Supplies',
+  'equipment': 'Equipment',
+  'software': 'Software',
+  'travel': 'Travel',
+  'maintenance': 'Maintenance',
+  'other': 'Other',
+};
+
+const priorityLabels: Record<string, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+  urgent: 'Urgent',
+};
 
 interface ItemRow {
   description: string;
@@ -18,12 +36,15 @@ interface ItemRow {
 export default function NewRequisition() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
   const [department, setDepartment] = useState('');
-  const [category, setCategory] = useState<RequisitionCategory | ''>('');
-  const [priority, setPriority] = useState<RequisitionPriority | ''>('');
+  const [category, setCategory] = useState('');
+  const [priority, setPriority] = useState('');
   const [justification, setJustification] = useState('');
   const [items, setItems] = useState<ItemRow[]>([{ description: '', quantity: 1, unitPrice: 0 }]);
+  const [submitting, setSubmitting] = useState(false);
 
   const addItem = () => setItems([...items, { description: '', quantity: 1, unitPrice: 0 }]);
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
@@ -35,14 +56,51 @@ export default function NewRequisition() {
 
   const total = items.reduce((s, item) => s + item.quantity * item.unitPrice, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !department || !category || !priority) {
       toast({ title: 'Missing fields', description: 'Please fill in all required fields.', variant: 'destructive' });
       return;
     }
+    if (!user) return;
+
+    setSubmitting(true);
+    const { data: req, error } = await supabase
+      .from('requisitions')
+      .insert({
+        user_id: user.id,
+        title,
+        department,
+        category,
+        priority,
+        justification,
+        total_amount: total,
+        req_number: '',
+      })
+      .select()
+      .single();
+
+    if (error || !req) {
+      toast({ title: 'Error', description: error?.message || 'Failed to create requisition', variant: 'destructive' });
+      setSubmitting(false);
+      return;
+    }
+
+    const itemRows = items.filter(i => i.description).map(i => ({
+      requisition_id: req.id,
+      description: i.description,
+      quantity: i.quantity,
+      unit_price: i.unitPrice,
+    }));
+
+    if (itemRows.length > 0) {
+      await supabase.from('requisition_items').insert(itemRows);
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['requisitions'] });
     toast({ title: 'Requisition Submitted!', description: `Your request "${title}" has been submitted for review.` });
     navigate('/requisitions');
+    setSubmitting(false);
   };
 
   return (
@@ -76,10 +134,10 @@ export default function NewRequisition() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
-            <Select value={category} onValueChange={(v) => setCategory(v as RequisitionCategory)}>
+            <Select value={category} onValueChange={setCategory}>
               <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
               <SelectContent>
-                {(Object.entries(categoryLabels) as [RequisitionCategory, string][]).map(([k, v]) => (
+                {Object.entries(categoryLabels).map(([k, v]) => (
                   <SelectItem key={k} value={k}>{v}</SelectItem>
                 ))}
               </SelectContent>
@@ -87,10 +145,10 @@ export default function NewRequisition() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="priority">Priority *</Label>
-            <Select value={priority} onValueChange={(v) => setPriority(v as RequisitionPriority)}>
+            <Select value={priority} onValueChange={setPriority}>
               <SelectTrigger><SelectValue placeholder="Select priority" /></SelectTrigger>
               <SelectContent>
-                {(Object.entries(priorityLabels) as [RequisitionPriority, string][]).map(([k, v]) => (
+                {Object.entries(priorityLabels).map(([k, v]) => (
                   <SelectItem key={k} value={k}>{v}</SelectItem>
                 ))}
               </SelectContent>
@@ -130,16 +188,16 @@ export default function NewRequisition() {
           <div className="flex justify-end">
             <div className="bg-primary/5 rounded-lg px-4 py-2 text-right">
               <p className="text-xs text-muted-foreground">Estimated Total</p>
-              <p className="text-lg font-heading font-bold text-primary">${total.toLocaleString()}</p>
+              <p className="text-lg font-heading font-bold text-primary">₦{total.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-2 border-t border-border">
           <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancel</Button>
-          <Button type="submit" className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
+          <Button type="submit" disabled={submitting} className="gap-2 bg-accent text-accent-foreground hover:bg-accent/90">
             <Send className="w-4 h-4" />
-            Submit Requisition
+            {submitting ? 'Submitting...' : 'Submit Requisition'}
           </Button>
         </div>
       </form>
