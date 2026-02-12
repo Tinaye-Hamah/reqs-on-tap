@@ -26,8 +26,8 @@ export function AppSidebar() {
             <FileText className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-heading text-lg font-bold leading-tight">ReqFlow</h1>
-            <p className="text-xs text-sidebar-foreground/60">Requisition Manager</p>
+            <h1 className="font-heading text-lg font-bold leading-tight">Brainstake</h1>
+            <p className="text-xs text-sidebar-foreground/60">Internal Requisition Platform</p>
           </div>
         </div>
       </div>
