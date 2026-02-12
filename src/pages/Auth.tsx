@@ -66,9 +66,9 @@ export default function Auth() {
           <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center mx-auto">
             <FileText className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-heading font-bold">ReqFlow</h1>
+          <h1 className="text-2xl font-heading font-bold">Brainstake</h1>
           <p className="text-muted-foreground text-sm">
-            {isLogin ? 'Sign in to manage requisitions' : 'Create your account'}
+            {isLogin ? 'Internal Requisition Platform — Sign in to continue' : 'Create your staff account'}
           </p>
         </div>
 
