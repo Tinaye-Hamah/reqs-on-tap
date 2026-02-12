@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { FileText, Menu, X, LayoutDashboard, ClipboardList, FilePlus, LogOut } from 'lucide-react';
+import { Menu, X, LayoutDashboard, ClipboardList, FilePlus, LogOut } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
@@ -19,9 +20,7 @@ export function MobileHeader() {
     <header className="lg:hidden sticky top-0 z-50 bg-sidebar text-sidebar-foreground print:hidden">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-            <FileText className="w-4 h-4 text-sidebar-primary-foreground" />
-          </div>
+          <img src={logo} alt="Brainstake" className="w-8 h-8 rounded-lg object-contain" />
           <span className="font-heading font-bold">Brainstake</span>
         </div>
         <button onClick={() => setOpen(!open)} className="p-2">

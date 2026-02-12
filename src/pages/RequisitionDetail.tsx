@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import logo from '@/assets/logo.png';
 
 const categoryLabels: Record<string, string> = {
   'office-supplies': 'Office Supplies', equipment: 'Equipment', software: 'Software',
@@ -81,6 +82,13 @@ export default function RequisitionDetail() {
 
       <div className="rounded-xl border bg-card shadow-sm overflow-hidden print:shadow-none print:border-black">
         <div className="p-6 border-b border-border">
+          <div className="hidden print:flex items-center gap-3 mb-4">
+            <img src={logo} alt="Brainstake" className="w-12 h-12 object-contain" />
+            <div>
+              <h2 className="font-heading font-bold text-lg">Brainstake</h2>
+              <p className="text-xs text-muted-foreground">Internal Requisition Platform</p>
+            </div>
+          </div>
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-1">{req.req_number}</p>
