@@ -6,7 +6,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  isAdmin: boolean;
+  isElevated: boolean;
+  role: string;
   profile: { full_name: string; department: string } | null;
   signOut: () => Promise<void>;
 }
@@ -15,7 +16,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  isAdmin: false,
+  isElevated: false,
+  role: 'employee',
   profile: null,
   signOut: async () => {},
 });
@@ -24,7 +26,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isElevated, setIsElevated] = useState(false);
+  const [role, setRole] = useState('employee');
   const [profile, setProfile] = useState<{ full_name: string; department: string } | null>(null);
 
   useEffect(() => {
@@ -32,7 +35,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (!session?.user) {
-        setIsAdmin(false);
+        setIsElevated(false);
+        setRole('employee');
         setProfile(null);
         setLoading(false);
       }
@@ -56,7 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.from('profiles').select('full_name, department').eq('user_id', user.id).single(),
       ]);
 
-      setIsAdmin(rolesRes.data?.some(r => r.role === 'admin') ?? false);
+      const userRole = rolesRes.data?.[0]?.role || 'employee';
+      setRole(userRole);
+      setIsElevated(['manager', 'accountant', 'ceo'].includes(userRole));
       setProfile(profileRes.data ?? null);
       setLoading(false);
     };
@@ -69,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, profile, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isElevated, role, profile, signOut }}>
       {children}
     </AuthContext.Provider>
   );

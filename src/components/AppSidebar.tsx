@@ -7,11 +7,11 @@ import {
 
 export function AppSidebar() {
   const location = useLocation();
-  const { isAdmin, profile, user, signOut } = useAuth();
+  const { isElevated, role, profile, user, signOut } = useAuth();
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/requisitions', label: isAdmin ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
+    { to: '/requisitions', label: isElevated ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
     { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
   ];
 
@@ -61,7 +61,7 @@ export function AppSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
-            <p className="text-xs text-sidebar-foreground/60 truncate">{isAdmin ? 'Accounts Manager' : 'Employee'}</p>
+            <p className="text-xs text-sidebar-foreground/60 truncate capitalize">{role}</p>
           </div>
           <button onClick={signOut} className="text-sidebar-foreground/60 hover:text-sidebar-foreground">
             <LogOut className="w-4 h-4" />
