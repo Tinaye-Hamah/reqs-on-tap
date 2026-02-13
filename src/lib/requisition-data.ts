@@ -1,4 +1,4 @@
-export type RequisitionStatus = 'pending' | 'approved' | 'rejected' | 'in-progress';
+export type RequisitionStatus = 'pending' | 'manager_approved' | 'approved' | 'rejected' | 'in-progress';
 export type RequisitionPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type RequisitionCategory = 'office-supplies' | 'equipment' | 'software' | 'travel' | 'maintenance' | 'other';
 
@@ -151,6 +151,7 @@ export const priorityLabels: Record<RequisitionPriority, string> = {
 
 export const statusLabels: Record<RequisitionStatus, string> = {
   pending: 'Pending',
+  manager_approved: 'Manager Approved',
   approved: 'Approved',
   rejected: 'Rejected',
   'in-progress': 'In Progress',

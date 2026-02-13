@@ -3,6 +3,7 @@ import { RequisitionStatus, statusLabels } from '@/lib/requisition-data';
 
 const statusStyles: Record<RequisitionStatus, string> = {
   pending: 'bg-warning/15 text-warning border-warning/30',
+  manager_approved: 'bg-blue-500/15 text-blue-600 border-blue-500/30',
   approved: 'bg-success/15 text-success border-success/30',
   rejected: 'bg-destructive/15 text-destructive border-destructive/30',
   'in-progress': 'bg-info/15 text-info border-info/30',

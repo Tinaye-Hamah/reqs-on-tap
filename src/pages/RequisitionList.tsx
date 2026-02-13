@@ -10,12 +10,13 @@ import { cn } from '@/lib/utils';
 
 const statusLabels: Record<string, string> = {
   pending: 'Pending',
+  manager_approved: 'Manager Approved',
   approved: 'Approved',
   rejected: 'Rejected',
   'in-progress': 'In Progress',
 };
 
-const filters = ['all', 'pending', 'approved', 'in-progress', 'rejected'];
+const filters = ['all', 'pending', 'manager_approved', 'approved', 'in-progress', 'rejected'];
 
 export default function RequisitionList() {
   const navigate = useNavigate();

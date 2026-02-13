@@ -24,7 +24,7 @@ export default function Dashboard() {
     enabled: !!user,
   });
 
-  const pending = requisitions.filter(r => r.status === 'pending').length;
+  const pending = requisitions.filter(r => r.status === 'pending' || r.status === 'manager_approved').length;
   const approved = requisitions.filter(r => r.status === 'approved').length;
   const total = requisitions.reduce((s, r) => s + Number(r.total_amount), 0);
   const recent = requisitions.slice(0, 5);
