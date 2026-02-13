@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
-import { Menu, X, LayoutDashboard, ClipboardList, FilePlus, LogOut } from 'lucide-react';
+import { Menu, X, LayoutDashboard, ClipboardList, FilePlus, LogOut, BookOpen } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
 export function MobileHeader() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
-  const { isElevated, signOut } = useAuth();
+  const { isElevated, role, signOut } = useAuth();
 
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/requisitions', label: isElevated ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
     { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
+    ...(role === 'accountant' ? [{ to: '/cashbook', label: 'Cashbook', icon: BookOpen }] : []),
   ];
 
   return (

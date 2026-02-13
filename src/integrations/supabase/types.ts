@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      cashbook: {
+        Row: {
+          balance: number
+          created_at: string
+          credit: number
+          debit: number
+          description: string
+          id: string
+          requisition_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string
+          id?: string
+          requisition_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          credit?: number
+          debit?: number
+          description?: string
+          id?: string
+          requisition_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cashbook_requisition_id_fkey"
+            columns: ["requisition_id"]
+            isOneToOne: false
+            referencedRelation: "requisitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

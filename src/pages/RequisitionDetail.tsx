@@ -20,7 +20,7 @@ const categoryLabels: Record<string, string> = {
 export default function RequisitionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isElevated, user } = useAuth();
+  const { isElevated, role, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -158,9 +158,50 @@ export default function RequisitionDetail() {
             </div>
           </div>
 
-          {isElevated && req.status === 'pending' && (
+          {/* Manager: first approval (pending → manager_approved) */}
+          {role === 'manager' && req.status === 'pending' && (
             <div className="flex gap-3 pt-2 border-t border-border print:hidden">
-              <Button onClick={() => updateStatus.mutate('approved')} className="bg-success text-success-foreground hover:bg-success/90 flex-1">Approve</Button>
+              <Button onClick={() => updateStatus.mutate('manager_approved')} className="bg-success text-success-foreground hover:bg-success/90 flex-1">Approve (Manager)</Button>
+              <Button onClick={() => updateStatus.mutate('rejected')} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 flex-1">Reject</Button>
+            </div>
+          )}
+
+          {/* Accountant: second approval (manager_approved → approved) + cashbook entry */}
+          {role === 'accountant' && req.status === 'manager_approved' && (
+            <div className="flex gap-3 pt-2 border-t border-border print:hidden">
+              <Button
+                onClick={async () => {
+                  // Approve and record in cashbook
+                  await updateStatus.mutateAsync('approved');
+                  const lastEntry = await supabase
+                    .from('cashbook')
+                    .select('balance')
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+                  const prevBalance = lastEntry.data?.[0]?.balance ?? 0;
+                  const debitAmount = Number(req.total_amount);
+                  await supabase.from('cashbook').insert({
+                    requisition_id: req.id,
+                    description: `${req.req_number} — ${req.title}`,
+                    debit: debitAmount,
+                    credit: 0,
+                    balance: Number(prevBalance) - debitAmount,
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+                  toast({ title: 'Approved & recorded in cashbook' });
+                }}
+                className="bg-success text-success-foreground hover:bg-success/90 flex-1"
+              >
+                Approve (Accountant)
+              </Button>
+              <Button onClick={() => updateStatus.mutate('rejected')} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 flex-1">Reject</Button>
+            </div>
+          )}
+
+          {/* CEO can also see but approval is manager→accountant flow */}
+          {role === 'ceo' && req.status === 'pending' && (
+            <div className="flex gap-3 pt-2 border-t border-border print:hidden">
+              <Button onClick={() => updateStatus.mutate('manager_approved')} className="bg-success text-success-foreground hover:bg-success/90 flex-1">Approve</Button>
               <Button onClick={() => updateStatus.mutate('rejected')} variant="outline" className="border-destructive text-destructive hover:bg-destructive/10 flex-1">Reject</Button>
             </div>
           )}
