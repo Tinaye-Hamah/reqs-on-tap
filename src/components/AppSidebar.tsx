@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  LayoutDashboard, FilePlus, ClipboardList, LogOut, BookOpen,
+  LayoutDashboard, FilePlus, ClipboardList, LogOut, BookOpen, Shield,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
@@ -15,6 +15,7 @@ export function AppSidebar() {
     { to: '/requisitions', label: isElevated ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
     { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
     ...(role === 'accountant' ? [{ to: '/cashbook', label: 'Cashbook', icon: BookOpen }] : []),
+    ...(role === 'ceo' ? [{ to: '/manage-roles', label: 'Manage Roles', icon: Shield }] : []),
   ];
 
   const initials = (profile?.full_name || user?.email || '??')

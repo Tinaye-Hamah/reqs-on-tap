@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import RequisitionList from "./pages/RequisitionList";
 import RequisitionDetail from "./pages/RequisitionDetail";
 import NewRequisition from "./pages/NewRequisition";
+import ManageRoles from "./pages/ManageRoles";
 import Cashbook from "./pages/Cashbook";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/requisitions/new" element={<NewRequisition />} />
               <Route path="/requisitions/:id" element={<RequisitionDetail />} />
               <Route path="/cashbook" element={<Cashbook />} />
+              <Route path="/manage-roles" element={<ManageRoles />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
