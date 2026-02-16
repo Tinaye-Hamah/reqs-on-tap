@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -8,6 +9,7 @@ import { BookOpen } from 'lucide-react';
 
 export default function Cashbook() {
   const { user, role } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ['cashbook'],
@@ -17,10 +19,39 @@ export default function Cashbook() {
         .select('*')
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return data;
+
+      // Recalculate running balance client-side for accuracy
+      let runningBalance = 0;
+      return data.map((entry: any) => {
+        runningBalance += Number(entry.credit) - Number(entry.debit);
+        return { ...entry, runningBalance };
+      });
     },
     enabled: !!user && role === 'accountant',
   });
+
+  // Realtime subscription for cashbook updates
+  useEffect(() => {
+    if (role !== 'accountant') return;
+
+    const channel = supabase
+      .channel('cashbook-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'cashbook' },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['cashbook'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [role, queryClient]);
+
+  // Calculate total balance
+  const totalBalance = entries.length > 0 ? entries[entries.length - 1].runningBalance : 0;
 
   if (role !== 'accountant') {
     return (
@@ -33,12 +64,20 @@ export default function Cashbook() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <div className="flex items-center gap-3">
-          <BookOpen className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl md:text-3xl font-heading font-bold">Cashbook</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <BookOpen className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl md:text-3xl font-heading font-bold">Cashbook</h1>
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">Record of all approved requisition transactions</p>
         </div>
-        <p className="text-muted-foreground text-sm mt-1">Record of all approved requisition transactions</p>
+        <div className="bg-primary/5 rounded-lg px-4 py-2 text-right">
+          <p className="text-xs text-muted-foreground">Current Balance</p>
+          <p className={`text-lg font-heading font-bold ${totalBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+            ${totalBalance.toLocaleString()}
+          </p>
+        </div>
       </div>
 
       {isLoading ? (
@@ -72,8 +111,8 @@ export default function Cashbook() {
                   <TableCell className="text-sm text-right text-success font-medium">
                     {Number(entry.credit) > 0 ? `$${Number(entry.credit).toLocaleString()}` : '—'}
                   </TableCell>
-                  <TableCell className="text-sm text-right font-bold">
-                    ${Number(entry.balance).toLocaleString()}
+                  <TableCell className={`text-sm text-right font-bold ${entry.runningBalance >= 0 ? '' : 'text-destructive'}`}>
+                    ${entry.runningBalance.toLocaleString()}
                   </TableCell>
                 </TableRow>
               ))}
