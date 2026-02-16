@@ -47,6 +47,7 @@ export default function RequisitionDetail() {
       toast({ title: `Requisition ${status}` });
       queryClient.invalidateQueries({ queryKey: ['requisition', id] });
       queryClient.invalidateQueries({ queryKey: ['requisitions'] });
+      queryClient.invalidateQueries({ queryKey: ['cashbook'] });
     },
   });
 
