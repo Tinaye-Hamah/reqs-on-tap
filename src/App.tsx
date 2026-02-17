@@ -11,6 +11,17 @@ import RequisitionDetail from "./pages/RequisitionDetail";
 import NewRequisition from "./pages/NewRequisition";
 import ManageRoles from "./pages/ManageRoles";
 import Cashbook from "./pages/Cashbook";
+import ChartOfAccounts from "./pages/ChartOfAccounts";
+import OpeningBalances from "./pages/OpeningBalances";
+import ManualJournal from "./pages/ManualJournal";
+import Payments from "./pages/Payments";
+import Receipts from "./pages/Receipts";
+import Revenue from "./pages/Revenue";
+import DirectExpenses from "./pages/DirectExpenses";
+import AssetsRegister from "./pages/AssetsRegister";
+import LiabilitiesRegister from "./pages/LiabilitiesRegister";
+import GeneralLedger from "./pages/GeneralLedger";
+import Reports from "./pages/Reports";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -48,6 +59,18 @@ const App = () => (
               <Route path="/requisitions/:id" element={<RequisitionDetail />} />
               <Route path="/cashbook" element={<Cashbook />} />
               <Route path="/manage-roles" element={<ManageRoles />} />
+              {/* Accounting Module */}
+              <Route path="/accounting/coa" element={<ChartOfAccounts />} />
+              <Route path="/accounting/opening-balances" element={<OpeningBalances />} />
+              <Route path="/accounting/journal" element={<ManualJournal />} />
+              <Route path="/accounting/payments" element={<Payments />} />
+              <Route path="/accounting/receipts" element={<Receipts />} />
+              <Route path="/accounting/revenue" element={<Revenue />} />
+              <Route path="/accounting/expenses" element={<DirectExpenses />} />
+              <Route path="/accounting/assets" element={<AssetsRegister />} />
+              <Route path="/accounting/liabilities" element={<LiabilitiesRegister />} />
+              <Route path="/accounting/ledger" element={<GeneralLedger />} />
+              <Route path="/accounting/reports" element={<Reports />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
