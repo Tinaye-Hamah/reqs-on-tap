@@ -3,23 +3,60 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import {
   LayoutDashboard, FilePlus, ClipboardList, LogOut, BookOpen, Shield,
+  BookMarked, Scale, FileEdit, CreditCard, Wallet, TrendingUp, Receipt,
+  Package, Landmark, BarChart3,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
+import { Separator } from '@/components/ui/separator';
 
 export function AppSidebar() {
   const location = useLocation();
   const { isElevated, role, profile, user, signOut } = useAuth();
 
-  const navItems = [
+  const mainNavItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/requisitions', label: isElevated ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
     { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
-    ...(role === 'accountant' ? [{ to: '/cashbook', label: 'Cashbook', icon: BookOpen }] : []),
     ...(role === 'ceo' ? [{ to: '/manage-roles', label: 'Manage Roles', icon: Shield }] : []),
   ];
 
+  const accountingNavItems = (role === 'accountant' || role === 'ceo') ? [
+    { to: '/accounting/coa', label: 'Chart of Accounts', icon: BookMarked },
+    { to: '/accounting/opening-balances', label: 'Opening Balances', icon: Scale },
+    { to: '/accounting/journal', label: 'Manual Journal', icon: FileEdit },
+    { to: '/accounting/payments', label: 'Payments', icon: CreditCard },
+    { to: '/accounting/receipts', label: 'Receipts', icon: Wallet },
+    { to: '/accounting/revenue', label: 'Revenue', icon: TrendingUp },
+    { to: '/accounting/expenses', label: 'Direct Expenses', icon: Receipt },
+    { to: '/accounting/assets', label: 'Assets Register', icon: Package },
+    { to: '/accounting/liabilities', label: 'Liabilities', icon: Landmark },
+    { to: '/accounting/ledger', label: 'General Ledger', icon: BookOpen },
+    { to: '/accounting/reports', label: 'Reports', icon: BarChart3 },
+    { to: '/cashbook', label: 'Cashbook', icon: BookOpen },
+  ] : [];
+
   const initials = (profile?.full_name || user?.email || '??')
     .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+  const renderNavItem = (item: typeof mainNavItems[0]) => {
+    const isActive = location.pathname === item.to ||
+      (item.to !== '/' && location.pathname.startsWith(item.to));
+    return (
+      <NavLink
+        key={item.to}
+        to={item.to}
+        className={cn(
+          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+          isActive
+            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+        )}
+      >
+        <item.icon className="w-4 h-4" />
+        {item.label}
+      </NavLink>
+    );
+  };
 
   return (
     <aside className="hidden lg:flex flex-col w-64 bg-sidebar text-sidebar-foreground min-h-screen print:hidden">
@@ -33,26 +70,16 @@ export function AppSidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.to ||
-            (item.to !== '/' && location.pathname.startsWith(item.to));
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-              )}
-            >
-              <item.icon className="w-4 h-4" />
-              {item.label}
-            </NavLink>
-          );
-        })}
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+        {mainNavItems.map(renderNavItem)}
+
+        {accountingNavItems.length > 0 && (
+          <>
+            <Separator className="my-3 bg-sidebar-border" />
+            <p className="px-3 py-1 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Accounting</p>
+            {accountingNavItems.map(renderNavItem)}
+          </>
+        )}
       </nav>
 
       <div className="p-3 border-t border-sidebar-border">
