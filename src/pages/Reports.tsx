@@ -54,7 +54,7 @@ export default function Reports() {
   const liabilityTotal = accountBalances.filter((a: any) => a.account_type === 'Liability').reduce((s: number, a: any) => s + a.balance, 0);
   const equityTotal = accountBalances.filter((a: any) => a.account_type === 'Equity').reduce((s: number, a: any) => s + a.balance, 0);
 
-  if (role !== 'accountant' && role !== 'ceo') {
+  if (role !== 'accountant') {
     return <div className="flex flex-col items-center justify-center py-20"><p className="text-lg font-medium text-muted-foreground">Access Denied</p></div>;
   }
 

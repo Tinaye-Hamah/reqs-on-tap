@@ -21,7 +21,7 @@ export function MobileHeader() {
     ...(role === 'ceo' ? [{ to: '/manage-roles', label: 'Manage Roles', icon: Shield }] : []),
   ];
 
-  const accountingItems = (role === 'accountant' || role === 'ceo') ? [
+  const accountingItems = role === 'accountant' ? [
     { to: '/accounting/coa', label: 'Chart of Accounts', icon: BookMarked },
     { to: '/accounting/opening-balances', label: 'Opening Balances', icon: Scale },
     { to: '/accounting/journal', label: 'Manual Journal', icon: FileEdit },

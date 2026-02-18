@@ -123,14 +123,7 @@ export default function NewRequisition() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="department">Department *</Label>
-            <Select value={department} onValueChange={setDepartment}>
-              <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
-              <SelectContent>
-                {['Finance', 'Engineering', 'Marketing', 'Operations', 'HR', 'Sales'].map(d => (
-                  <SelectItem key={d} value={d}>{d}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+           <Input id="department" placeholder="e.g. Finance, Engineering, HR" value={department} onChange={e => setDepartment(e.target.value)} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>

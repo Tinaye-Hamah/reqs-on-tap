@@ -21,9 +21,10 @@ export default function Cashbook() {
       if (error) throw error;
 
       // Recalculate running balance client-side for accuracy
+      // Running balance: debits increase (money in), credits decrease (money out)
       let runningBalance = 0;
       return data.map((entry: any) => {
-        runningBalance += Number(entry.credit) - Number(entry.debit);
+        runningBalance += Number(entry.debit) - Number(entry.credit);
         return { ...entry, runningBalance };
       });
     },

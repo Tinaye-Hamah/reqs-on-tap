@@ -145,15 +145,15 @@ export default function RequisitionDetail() {
         payment_account_id: data.paymentAccountId,
       }).eq('id', id!);
 
-      // Also update legacy cashbook for backward compatibility
+      // Also update legacy cashbook — requisitions are money going OUT so credit the cashbook
       const lastEntry = await supabase.from('cashbook').select('balance').order('created_at', { ascending: false }).limit(1);
       const prevBalance = lastEntry.data?.[0]?.balance ?? 0;
-      const debitAmount = Number(req.total_amount);
+      const amount = Number(req.total_amount);
       await supabase.from('cashbook').insert({
         requisition_id: req.id,
         description: `${req.req_number} — ${req.title}`,
-        debit: debitAmount, credit: 0,
-        balance: Number(prevBalance) - debitAmount,
+        debit: 0, credit: amount,
+        balance: Number(prevBalance) - amount,
       });
 
       // Audit trail

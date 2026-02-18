@@ -20,7 +20,7 @@ export function AppSidebar() {
     ...(role === 'ceo' ? [{ to: '/manage-roles', label: 'Manage Roles', icon: Shield }] : []),
   ];
 
-  const accountingNavItems = (role === 'accountant' || role === 'ceo') ? [
+  const accountingNavItems = role === 'accountant' ? [
     { to: '/accounting/coa', label: 'Chart of Accounts', icon: BookMarked },
     { to: '/accounting/opening-balances', label: 'Opening Balances', icon: Scale },
     { to: '/accounting/journal', label: 'Manual Journal', icon: FileEdit },
