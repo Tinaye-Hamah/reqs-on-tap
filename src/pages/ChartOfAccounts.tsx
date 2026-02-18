@@ -87,7 +87,7 @@ export default function ChartOfAccounts() {
     return map[type] || '';
   };
 
-  if (role !== 'accountant' && role !== 'ceo') {
+  if (role !== 'accountant') {
     return <div className="flex flex-col items-center justify-center py-20"><p className="text-lg font-medium text-muted-foreground">Access Denied</p></div>;
   }
 
