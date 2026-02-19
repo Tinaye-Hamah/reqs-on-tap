@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2, FileEdit, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, FileEdit, AlertTriangle, Upload, Paperclip, X } from 'lucide-react';
 
 interface JournalLine {
   accountId: string; debit: number; credit: number; description: string;
@@ -21,10 +21,13 @@ export default function ManualJournal() {
   const { user, role } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [journalDate, setJournalDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [notes, setNotes] = useState('');
   const [lines, setLines] = useState<JournalLine[]>([{ ...emptyLine }, { ...emptyLine }]);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const { data: accounts = [] } = useQuery({
     queryKey: ['coa-active'],
@@ -35,7 +38,6 @@ export default function ManualJournal() {
     },
   });
 
-  // List of posted journals
   const { data: journals = [], isLoading: journalsLoading } = useQuery({
     queryKey: ['journals-manual'],
     queryFn: async () => {
@@ -45,7 +47,15 @@ export default function ManualJournal() {
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return data;
+      // Fetch attachment counts
+      const journalIds = data.map((j: any) => j.id);
+      if (journalIds.length) {
+        const { data: atts } = await supabase.from('attachments').select('entity_id').eq('entity_type', 'journal').in('entity_id', journalIds);
+        const countMap = new Map<string, number>();
+        (atts || []).forEach((a: any) => countMap.set(a.entity_id, (countMap.get(a.entity_id) || 0) + 1));
+        return data.map((j: any) => ({ ...j, attachment_count: countMap.get(j.id) || 0 }));
+      }
+      return data.map((j: any) => ({ ...j, attachment_count: 0 }));
     },
   });
 
@@ -60,6 +70,14 @@ export default function ManualJournal() {
   const totalDebits = lines.reduce((s, l) => s + l.debit, 0);
   const totalCredits = lines.reduce((s, l) => s + l.credit, 0);
   const isBalanced = totalDebits === totalCredits && totalDebits > 0;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const removeAttachment = (i: number) => setAttachments(attachments.filter((_, idx) => idx !== i));
 
   const postMutation = useMutation({
     mutationFn: async () => {
@@ -85,6 +103,31 @@ export default function ManualJournal() {
       }));
       const { error: lErr } = await supabase.from('journal_lines').insert(lineRows);
       if (lErr) throw lErr;
+
+      // Upload attachments
+      if (attachments.length > 0) {
+        setUploading(true);
+        for (const file of attachments) {
+          const filePath = `journals/${journal.id}/${Date.now()}_${file.name}`;
+          const { error: uploadErr } = await supabase.storage.from('attachments').upload(filePath, file);
+          if (uploadErr) {
+            console.error('Upload error:', uploadErr);
+            continue;
+          }
+          await supabase.from('attachments').insert({
+            entity_type: 'journal',
+            entity_id: journal.id,
+            file_name: file.name,
+            file_path: filePath,
+            file_size: file.size,
+            mime_type: file.type,
+            uploaded_by: user.id,
+          });
+        }
+        setUploading(false);
+      }
+
+      return journal;
     },
     onSuccess: () => {
       toast({ title: 'Journal posted and locked' });
@@ -92,6 +135,7 @@ export default function ManualJournal() {
       setDescription('');
       setNotes('');
       setLines([{ ...emptyLine }, { ...emptyLine }]);
+      setAttachments([]);
     },
     onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),
   });
@@ -188,9 +232,42 @@ export default function ManualJournal() {
           <Textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes..." />
         </div>
 
+        {/* Proof Documents / Attachments */}
+        <div className="space-y-2">
+          <Label>Supporting Documents</Label>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+            <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} className="gap-2">
+              <Upload className="w-4 h-4" /> Attach Files
+            </Button>
+            <span className="text-xs text-muted-foreground">PDF, images, or documents</span>
+          </div>
+          {attachments.length > 0 && (
+            <div className="space-y-1 mt-2">
+              {attachments.map((file, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-1.5 text-sm">
+                  <Paperclip className="w-3 h-3 text-muted-foreground" />
+                  <span className="flex-1 truncate">{file.name}</span>
+                  <span className="text-xs text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
+                  <button onClick={() => removeAttachment(i)} className="text-muted-foreground hover:text-destructive">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-end">
-          <Button onClick={() => postMutation.mutate()} disabled={!isBalanced || !description || postMutation.isPending}>
-            {postMutation.isPending ? 'Posting...' : 'Post & Lock Journal'}
+          <Button onClick={() => postMutation.mutate()} disabled={!isBalanced || !description || postMutation.isPending || uploading}>
+            {postMutation.isPending ? (uploading ? 'Uploading...' : 'Posting...') : 'Post & Lock Journal'}
           </Button>
         </div>
       </div>
@@ -207,6 +284,7 @@ export default function ManualJournal() {
                   <TableHead className="font-heading font-semibold">Date</TableHead>
                   <TableHead className="font-heading font-semibold">Description</TableHead>
                   <TableHead className="font-heading font-semibold text-right">Amount ($)</TableHead>
+                  <TableHead className="font-heading font-semibold text-center">Docs</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -218,6 +296,13 @@ export default function ManualJournal() {
                       <TableCell className="text-sm">{new Date(j.journal_date).toLocaleDateString()}</TableCell>
                       <TableCell className="text-sm">{j.description}</TableCell>
                       <TableCell className="text-sm text-right font-medium">${amount.toLocaleString()}</TableCell>
+                      <TableCell className="text-center">
+                        {j.attachment_count > 0 && (
+                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <Paperclip className="w-3 h-3" /> {j.attachment_count}
+                          </span>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })}

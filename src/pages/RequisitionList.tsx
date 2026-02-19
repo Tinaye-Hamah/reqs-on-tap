@@ -31,7 +31,11 @@ export default function RequisitionList() {
         .select('*, requisition_items(*)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data;
+      // Fetch requester names
+      const userIds = [...new Set(data.map((r: any) => r.user_id))];
+      const { data: profiles } = await supabase.from('profiles').select('user_id, full_name').in('user_id', userIds);
+      const nameMap = new Map((profiles || []).map((p: any) => [p.user_id, p.full_name]));
+      return data.map((r: any) => ({ ...r, requester_name: nameMap.get(r.user_id) || 'Unknown' }));
     },
     enabled: !!user,
   });

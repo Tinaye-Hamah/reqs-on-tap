@@ -32,6 +32,7 @@ export function RequisitionTable({ requisitions }: Props) {
           <TableRow className="bg-muted/50">
             <TableHead className="font-heading font-semibold">ID</TableHead>
             <TableHead className="font-heading font-semibold">Title</TableHead>
+            <TableHead className="font-heading font-semibold hidden lg:table-cell">Requester</TableHead>
             <TableHead className="font-heading font-semibold hidden md:table-cell">Category</TableHead>
             <TableHead className="font-heading font-semibold hidden sm:table-cell">Priority</TableHead>
             <TableHead className="font-heading font-semibold">Status</TableHead>
@@ -51,6 +52,9 @@ export function RequisitionTable({ requisitions }: Props) {
                   <p className="font-medium text-sm">{req.title}</p>
                   <p className="text-xs text-muted-foreground md:hidden">{categoryLabels[req.category] || req.category}</p>
                 </div>
+              </TableCell>
+              <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                {req.requester_name || '—'}
               </TableCell>
               <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                 {categoryLabels[req.category] || req.category}

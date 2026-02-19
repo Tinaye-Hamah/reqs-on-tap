@@ -39,7 +39,9 @@ export default function RequisitionDetail() {
         .eq('id', id!)
         .single();
       if (error) throw error;
-      return data;
+      // Fetch requester name
+      const { data: profile } = await supabase.from('profiles').select('full_name').eq('user_id', data.user_id).single();
+      return { ...data, requester_name: profile?.full_name || 'Unknown' };
     },
     enabled: !!id && !!user,
   });
@@ -227,7 +229,11 @@ export default function RequisitionDetail() {
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> Department</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><User className="w-3 h-3" /> Requested By</p>
+              <p className="text-sm font-medium">{req.requester_name}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Building2 className="w-3 h-3" /> Department</p>
               <p className="text-sm font-medium">{req.department}</p>
             </div>
             <div className="space-y-1">
