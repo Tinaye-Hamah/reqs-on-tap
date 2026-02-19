@@ -6,6 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Shield } from 'lucide-react';
 
+import { Input } from '@/components/ui/input';
+
 const roleOptions = [
   { value: 'employee', label: 'Employee' },
   { value: 'manager', label: 'Manager' },
@@ -38,8 +40,17 @@ export default function ManageRoles() {
     enabled: !!user && role === 'ceo',
   });
 
+  const ceoCount = users.filter((u: any) => u.role === 'ceo').length;
+
   const updateRole = useMutation({
-    mutationFn: async ({ roleId, newRole }: { roleId: string; newRole: string }) => {
+    mutationFn: async ({ roleId, newRole, userId }: { roleId: string; newRole: string; userId: string }) => {
+      // Enforce max 2 CEOs
+      if (newRole === 'ceo') {
+        const currentCeos = users.filter((u: any) => u.role === 'ceo' && u.user_id !== userId);
+        if (currentCeos.length >= 2) {
+          throw new Error('Maximum of 2 CEO roles allowed. Please remove a CEO role first.');
+        }
+      }
       const { error } = await supabase
         .from('user_roles')
         .update({ role: newRole as any })
@@ -52,6 +63,23 @@ export default function ManageRoles() {
     },
     onError: (err: any) => {
       toast({ title: 'Failed to update role', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const updateDepartment = useMutation({
+    mutationFn: async ({ userId, department }: { userId: string; department: string }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ department })
+        .eq('user_id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({ title: 'Department updated' });
+      queryClient.invalidateQueries({ queryKey: ['all-users-roles'] });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to update department', description: err.message, variant: 'destructive' });
     },
   });
 
@@ -89,6 +117,7 @@ export default function ManageRoles() {
                 <TableHead className="font-heading font-semibold">Department</TableHead>
                 <TableHead className="font-heading font-semibold">Current Role</TableHead>
                 <TableHead className="font-heading font-semibold">Change Role</TableHead>
+                <TableHead className="font-heading font-semibold">Assign Department</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -103,19 +132,37 @@ export default function ManageRoles() {
                     ) : u.role_id ? (
                       <Select
                         value={u.role}
-                        onValueChange={(newRole) => updateRole.mutate({ roleId: u.role_id, newRole })}
+                        onValueChange={(newRole) => updateRole.mutate({ roleId: u.role_id, newRole, userId: u.user_id })}
                       >
                         <SelectTrigger className="w-36 h-8 text-xs">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {roleOptions.map(r => (
-                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                            <SelectItem key={r.value} value={r.value} disabled={r.value === 'ceo' && ceoCount >= 2 && u.role !== 'ceo'}>
+                              {r.label}{r.value === 'ceo' && ceoCount >= 2 && u.role !== 'ceo' ? ' (max 2)' : ''}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     ) : (
                       <span className="text-xs text-muted-foreground">No role record</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {u.user_id === user?.id ? (
+                      <span className="text-xs text-muted-foreground italic">{u.department || '—'}</span>
+                    ) : (
+                      <Input
+                        className="w-36 h-8 text-xs"
+                        defaultValue={u.department || ''}
+                        placeholder="Assign dept"
+                        onBlur={(e) => {
+                          if (e.target.value !== (u.department || '')) {
+                            updateDepartment.mutate({ userId: u.user_id, department: e.target.value });
+                          }
+                        }}
+                      />
                     )}
                   </TableCell>
                 </TableRow>

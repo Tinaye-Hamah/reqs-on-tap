@@ -22,6 +22,7 @@ import AssetsRegister from "./pages/AssetsRegister";
 import LiabilitiesRegister from "./pages/LiabilitiesRegister";
 import GeneralLedger from "./pages/GeneralLedger";
 import Reports from "./pages/Reports";
+import Quotations from "./pages/Quotations";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/accounting/liabilities" element={<LiabilitiesRegister />} />
               <Route path="/accounting/ledger" element={<GeneralLedger />} />
               <Route path="/accounting/reports" element={<Reports />} />
+              <Route path="/accounting/quotations" element={<Quotations />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

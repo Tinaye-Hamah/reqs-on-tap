@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   Menu, X, LayoutDashboard, ClipboardList, FilePlus, LogOut, BookOpen, Shield,
   BookMarked, Scale, FileEdit, CreditCard, Wallet, TrendingUp, Receipt,
-  Package, Landmark, BarChart3,
+  Package, Landmark, BarChart3, FileText,
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
@@ -33,6 +33,7 @@ export function MobileHeader() {
     { to: '/accounting/liabilities', label: 'Liabilities', icon: Landmark },
     { to: '/accounting/ledger', label: 'General Ledger', icon: BookOpen },
     { to: '/accounting/reports', label: 'Reports', icon: BarChart3 },
+    { to: '/accounting/quotations', label: 'Quotations', icon: FileText },
     { to: '/cashbook', label: 'Cashbook', icon: BookOpen },
   ] : [];
 
