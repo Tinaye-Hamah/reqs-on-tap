@@ -18,8 +18,16 @@ export function MobileHeader() {
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/requisitions', label: isElevated ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
     { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
-    ...(role === 'ceo' ? [{ to: '/manage-roles', label: 'Manage Roles', icon: Shield }] : []),
+    ...(role === 'ceo' ? [
+      { to: '/manage-roles', label: 'Manage Roles', icon: Shield },
+      { to: '/company-settings', label: 'Company Settings', icon: BookMarked },
+    ] : []),
   ];
+
+  const managerItems = role === 'manager' ? [
+    { to: '/accounting/quotations', label: 'Quotations', icon: FileText },
+    { to: '/accounting/receipts', label: 'Receipts', icon: Wallet },
+  ] : [];
 
   const accountingItems = role === 'accountant' ? [
     { to: '/accounting/coa', label: 'Chart of Accounts', icon: BookMarked },
@@ -63,6 +71,12 @@ export function MobileHeader() {
       {open && (
         <nav className="px-3 pb-3 space-y-1 animate-fade-in max-h-[80vh] overflow-y-auto">
           {navItems.map(renderItem)}
+          {managerItems.length > 0 && (
+            <>
+              <p className="px-3 py-1 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider mt-2">Sales</p>
+              {managerItems.map(renderItem)}
+            </>
+          )}
           {accountingItems.length > 0 && (
             <>
               <p className="px-3 py-1 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider mt-2">Accounting</p>

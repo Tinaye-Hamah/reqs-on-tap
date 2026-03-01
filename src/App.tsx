@@ -23,6 +23,7 @@ import LiabilitiesRegister from "./pages/LiabilitiesRegister";
 import GeneralLedger from "./pages/GeneralLedger";
 import Reports from "./pages/Reports";
 import Quotations from "./pages/Quotations";
+import CompanySettings from "./pages/CompanySettings";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/requisitions/:id" element={<RequisitionDetail />} />
               <Route path="/cashbook" element={<Cashbook />} />
               <Route path="/manage-roles" element={<ManageRoles />} />
+              <Route path="/company-settings" element={<CompanySettings />} />
               {/* Accounting Module */}
               <Route path="/accounting/coa" element={<ChartOfAccounts />} />
               <Route path="/accounting/opening-balances" element={<OpeningBalances />} />

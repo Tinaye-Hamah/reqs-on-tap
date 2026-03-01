@@ -24,8 +24,17 @@ export default function Reports() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('journal_lines')
-        .select('*, journals!inner(is_posted)')
+        .select('*, journals!inner(is_posted, journal_type)')
         .eq('journals.is_posted', true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: cashbookEntries = [] } = useQuery({
+    queryKey: ['cashbook'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('cashbook').select('*').order('created_at', { ascending: true });
       if (error) throw error;
       return data;
     },
@@ -54,6 +63,46 @@ export default function Reports() {
   const liabilityTotal = accountBalances.filter((a: any) => a.account_type === 'Liability').reduce((s: number, a: any) => s + a.balance, 0);
   const equityTotal = accountBalances.filter((a: any) => a.account_type === 'Equity').reduce((s: number, a: any) => s + a.balance, 0);
 
+  // Cash Flow Statement
+  // Operating: receipts (debit to cash/bank) minus payments (credit from cash/bank)
+  const cashBankAccounts = accounts.filter((a: any) => a.account_subtype === 'Cash' || a.account_subtype === 'Bank');
+  const cashBankIds = cashBankAccounts.map((a: any) => a.id);
+
+  const operatingLines = allLines.filter((l: any) => {
+    const jType = l.journals?.journal_type;
+    return cashBankIds.includes(l.account_id) && ['receipt', 'payment', 'requisition_approval', 'revenue', 'expense'].includes(jType);
+  });
+  const operatingInflows = operatingLines.reduce((s: number, l: any) => s + Number(l.debit), 0);
+  const operatingOutflows = operatingLines.reduce((s: number, l: any) => s + Number(l.credit), 0);
+  const netOperating = operatingInflows - operatingOutflows;
+
+  const investingLines = allLines.filter((l: any) => {
+    const jType = l.journals?.journal_type;
+    return cashBankIds.includes(l.account_id) && ['depreciation'].includes(jType);
+  });
+  const investingInflows = investingLines.reduce((s: number, l: any) => s + Number(l.debit), 0);
+  const investingOutflows = investingLines.reduce((s: number, l: any) => s + Number(l.credit), 0);
+  const netInvesting = investingInflows - investingOutflows;
+
+  // Fixed asset purchases from journal lines
+  const fixedAssetAccounts = accounts.filter((a: any) => a.account_subtype === 'Fixed Asset');
+  const fixedAssetIds = fixedAssetAccounts.map((a: any) => a.id);
+  const assetPurchases = allLines.filter((l: any) => fixedAssetIds.includes(l.account_id)).reduce((s: number, l: any) => s + Number(l.debit) - Number(l.credit), 0);
+
+  const financingLines = allLines.filter((l: any) => {
+    const jType = l.journals?.journal_type;
+    return cashBankIds.includes(l.account_id) && ['opening_balance', 'manual'].includes(jType);
+  });
+  const financingInflows = financingLines.reduce((s: number, l: any) => s + Number(l.debit), 0);
+  const financingOutflows = financingLines.reduce((s: number, l: any) => s + Number(l.credit), 0);
+  const netFinancing = financingInflows - financingOutflows;
+
+  const totalCashChange = netOperating + netInvesting + netFinancing;
+  const totalCashBalance = cashBankAccounts.reduce((s: number, a: any) => {
+    const ab = accountBalances.find((ab: any) => ab.id === a.id);
+    return s + (ab?.balance || 0);
+  }, 0);
+
   if (role !== 'accountant') {
     return <div className="flex flex-col items-center justify-center py-20"><p className="text-lg font-medium text-muted-foreground">Access Denied</p></div>;
   }
@@ -73,6 +122,7 @@ export default function Reports() {
           <TabsTrigger value="trial-balance">Trial Balance</TabsTrigger>
           <TabsTrigger value="income-statement">Income Statement</TabsTrigger>
           <TabsTrigger value="balance-sheet">Balance Sheet</TabsTrigger>
+          <TabsTrigger value="cash-flow">Cash Flow</TabsTrigger>
         </TabsList>
 
         <TabsContent value="trial-balance" className="mt-4">
@@ -151,6 +201,35 @@ export default function Reports() {
 
             <div className="flex justify-between font-bold text-lg border-t pt-3">
               <span>Total Liabilities + Equity</span><span>${(liabilityTotal + equityTotal + netIncome).toLocaleString()}</span>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="cash-flow" className="mt-4">
+          <div className="rounded-xl border bg-card shadow-sm p-6 space-y-4">
+            <h3 className="font-heading font-bold text-lg">Operating Activities</h3>
+            <div className="flex justify-between text-sm"><span>Cash received from customers</span><span className="text-success">${operatingInflows.toLocaleString()}</span></div>
+            <div className="flex justify-between text-sm"><span>Cash paid to suppliers & expenses</span><span className="text-destructive">(${operatingOutflows.toLocaleString()})</span></div>
+            <div className={`flex justify-between font-bold border-t pt-2 ${netOperating >= 0 ? 'text-success' : 'text-destructive'}`}>
+              <span>Net Cash from Operations</span><span>${netOperating.toLocaleString()}</span>
+            </div>
+
+            <h3 className="font-heading font-bold text-lg mt-4">Investing Activities</h3>
+            <div className="flex justify-between text-sm"><span>Purchase of fixed assets</span><span className="text-destructive">{assetPurchases > 0 ? `($${assetPurchases.toLocaleString()})` : '$0'}</span></div>
+            {netInvesting !== 0 && <div className="flex justify-between text-sm"><span>Other investing cash flows</span><span>${netInvesting.toLocaleString()}</span></div>}
+            <div className={`flex justify-between font-bold border-t pt-2 ${(netInvesting - assetPurchases) >= 0 ? '' : 'text-destructive'}`}>
+              <span>Net Cash from Investing</span><span>${(netInvesting - assetPurchases).toLocaleString()}</span>
+            </div>
+
+            <h3 className="font-heading font-bold text-lg mt-4">Financing Activities</h3>
+            <div className="flex justify-between text-sm"><span>Capital & opening balances</span><span>${financingInflows.toLocaleString()}</span></div>
+            {financingOutflows > 0 && <div className="flex justify-between text-sm"><span>Distributions</span><span className="text-destructive">(${financingOutflows.toLocaleString()})</span></div>}
+            <div className="flex justify-between font-bold border-t pt-2">
+              <span>Net Cash from Financing</span><span>${netFinancing.toLocaleString()}</span>
+            </div>
+
+            <div className={`flex justify-between font-bold text-lg border-t-2 pt-4 mt-4 ${totalCashBalance >= 0 ? 'text-success' : 'text-destructive'}`}>
+              <span>Cash & Cash Equivalents at End</span><span>${totalCashBalance.toLocaleString()}</span>
             </div>
           </div>
         </TabsContent>
