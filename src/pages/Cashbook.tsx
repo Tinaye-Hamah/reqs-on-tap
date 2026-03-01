@@ -28,12 +28,12 @@ export default function Cashbook() {
         return { ...entry, runningBalance };
       });
     },
-    enabled: !!user && role === 'accountant',
+    enabled: !!user && (role === 'accountant' || role === 'manager' || role === 'ceo'),
   });
 
   // Realtime subscription for cashbook updates
   useEffect(() => {
-    if (role !== 'accountant') return;
+    if (role !== 'accountant' && role !== 'manager' && role !== 'ceo') return;
 
     const channel = supabase
       .channel('cashbook-realtime')
@@ -54,11 +54,11 @@ export default function Cashbook() {
   // Calculate total balance
   const totalBalance = entries.length > 0 ? entries[entries.length - 1].runningBalance : 0;
 
-  if (role !== 'accountant') {
+  if (role !== 'accountant' && role !== 'manager' && role !== 'ceo') {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
         <p className="text-lg font-medium text-muted-foreground">Access Denied</p>
-        <p className="text-sm text-muted-foreground mt-1">Only accountants can view the cashbook.</p>
+        <p className="text-sm text-muted-foreground mt-1">Only elevated roles can view the cashbook.</p>
       </div>
     );
   }

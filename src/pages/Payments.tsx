@@ -92,11 +92,23 @@ export default function Payments() {
       const newPaid = Number(selectedPayable!.amount_paid) + amount;
       const newStatus = newPaid >= Number(selectedPayable!.amount) ? 'paid' : 'partial';
       await supabase.from('payables').update({ amount_paid: newPaid, status: newStatus }).eq('id', payableId);
+
+      // Record in cashbook (money out = credit)
+      const { data: lastEntry } = await supabase.from('cashbook').select('balance').order('created_at', { ascending: false }).limit(1).maybeSingle();
+      const prevBalance = lastEntry ? Number(lastEntry.balance) : 0;
+      await supabase.from('cashbook').insert({
+        requisition_id: journal.id,
+        description: `Payment: ${selectedPayable?.description}`,
+        debit: 0,
+        credit: amount,
+        balance: prevBalance - amount,
+      });
     },
     onSuccess: () => {
       toast({ title: 'Payment posted' });
       queryClient.invalidateQueries({ queryKey: ['payables-outstanding'] });
       queryClient.invalidateQueries({ queryKey: ['journals-manual'] });
+      queryClient.invalidateQueries({ queryKey: ['cashbook'] });
       setPayableId(''); setAmount(0); setReference(''); setNotes('');
     },
     onError: (err: any) => toast({ title: 'Error', description: err.message, variant: 'destructive' }),

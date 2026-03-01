@@ -17,8 +17,16 @@ export function AppSidebar() {
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/requisitions', label: isElevated ? 'All Requisitions' : 'My Requisitions', icon: ClipboardList },
     { to: '/requisitions/new', label: 'New Request', icon: FilePlus },
-    ...(role === 'ceo' ? [{ to: '/manage-roles', label: 'Manage Roles', icon: Shield }] : []),
+    ...(role === 'ceo' ? [
+      { to: '/manage-roles', label: 'Manage Roles', icon: Shield },
+      { to: '/company-settings', label: 'Company Settings', icon: BookMarked },
+    ] : []),
   ];
+
+  const managerNavItems = role === 'manager' ? [
+    { to: '/accounting/quotations', label: 'Quotations', icon: FileText },
+    { to: '/accounting/receipts', label: 'Receipts', icon: Wallet },
+  ] : [];
 
   const accountingNavItems = role === 'accountant' ? [
     { to: '/accounting/coa', label: 'Chart of Accounts', icon: BookMarked },
@@ -74,6 +82,13 @@ export function AppSidebar() {
       <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         {mainNavItems.map(renderNavItem)}
 
+        {managerNavItems.length > 0 && (
+          <>
+            <Separator className="my-3 bg-sidebar-border" />
+            <p className="px-3 py-1 text-xs font-semibold text-sidebar-foreground/40 uppercase tracking-wider">Sales</p>
+            {managerNavItems.map(renderNavItem)}
+          </>
+        )}
         {accountingNavItems.length > 0 && (
           <>
             <Separator className="my-3 bg-sidebar-border" />
